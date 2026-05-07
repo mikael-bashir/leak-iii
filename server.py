@@ -11,12 +11,20 @@ from mcp.server.transport_security import TransportSecuritySettings
 from starlette.middleware.cors import CORSMiddleware
 from huggingface_hub import hf_hub_download
 from llama_cpp import Llama, CreateCompletionResponse
+import psutil
 
 import nest_asyncio
 nest_asyncio.apply()
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+def log_ram(stage: str):
+    """Logs the current RAM usage of the system."""
+    mem = psutil.virtual_memory()
+    used_gb = mem.used / (1024 ** 3)
+    total_gb = mem.total / (1024 ** 3)
+    logger.info(f"[RAM REPORT] {stage} | Used: {used_gb:.2f} GB / {total_gb:.2f} GB ({mem.percent}%)")
 
 # 1. Initialize FastMCP with your strict security settings
 mcp = FastMCP(
@@ -57,6 +65,8 @@ def propose_lean_tactic(current_proof_state: str, strategic_directive: str = "")
     ```lean4
     """
 
+    log_ram("Before LLM Inference")
+
     # CPU-bound inference
     raw_response = llm(
         prompt,
@@ -65,6 +75,8 @@ def propose_lean_tactic(current_proof_state: str, strategic_directive: str = "")
         temperature=0.2,
         stream=False      
     )
+
+    log_ram("After LLM Inference")
 
     response = typing.cast(CreateCompletionResponse, raw_response)
     
@@ -78,6 +90,8 @@ def propose_lean_tactic(current_proof_state: str, strategic_directive: str = "")
 async def main_serve():
     global llm
     logger.info("Booting DeepSeek Prover Worker...")
+
+    log_ram("Startup - Baseline Memory")
     
     # 1. The Warmup: Download and cache the 4-bit GGUF Model
     logger.info("⏳ Downloading and loading Unsloth 4-bit model into RAM. This may take 1-2 minutes...")
@@ -87,14 +101,19 @@ async def main_serve():
             filename="DeepSeek-Prover-V2-7B-Q4_K_M.gguf"
         )
         
+        log_ram("After File Download (Before Llama Load)")
+
         # Load into llama.cpp, forcing exactly 2 threads for the free HF CPU tier
         llm = Llama(
             model_path=model_path,
             n_ctx=2048,      
             n_threads=2,     
-            verbose=False
+            verbose=False,
+            use_mmap=True
         )
         logger.info("✅ Warmup Complete. DeepSeek-Prover is locked in RAM!")
+
+        log_ram("After Llama.cpp Initialization")
     except Exception as e:
         logger.error(f"❌ Failed to load model: {e}")
         logger.error(traceback.format_exc())

@@ -33,7 +33,8 @@ RUN uv venv --python 3.11 ${HOME}/app/.venv
 ENV PATH="${HOME}/app/.venv/bin:${PATH}"
 
 # 8. Install Leak-III Dependencies
-RUN uv pip install mcp huggingface-hub llama-cpp-python starlette uvicorn nest-asyncio typing
+RUN uv pip install mcp huggingface-hub starlette uvicorn nest-asyncio psutil
+RUN uv pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 
 # 9. Environment Variables
 EXPOSE 7860
