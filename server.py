@@ -70,6 +70,7 @@ def propose_lean_tactic(current_proof_state: str, strategic_directive: str = "")
     
     tactic_code = response['choices'][0]['text'].strip()
     return tactic_code
+#
 
 # ==========================================
 # 🚀 SERVER STARTUP
