@@ -40,5 +40,4 @@ RUN uv pip install llama-cpp-python --extra-index-url https://abetlen.github.io/
 EXPOSE 7860
 
 # 10. Boot the server using the virtual environment
-# Ensure your python script is named 'app.py' (or change this to match your filename)
-CMD ["python3", "app.py"]
+CMD ["python3", "server.py"]
