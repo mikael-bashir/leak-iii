@@ -44,10 +44,13 @@ llm = None
 def propose_lean_tactic(current_proof_state: str, strategic_directive: str = "") -> str:
     """
     Generates the next logical Lean 4 tactic based on the current proof state.
+    This is a heavy tool that takes at least a minute to run, so use when you
+    are stuck.
     
     Args:
         current_proof_state: The exact output from the 'get_current_proof_state' tool.
-        strategic_directive: The high-level mathematical strategy to follow (e.g., 'Use induction').
+        strategic_directive: The high-level mathematical strategy to follow (e.g., 'Use induction'). It is optional,
+        and you can just write 'N/A".
     """
     logger.info(f"Received request for tactic. Strategy: {strategic_directive}")
     
@@ -70,9 +73,9 @@ def propose_lean_tactic(current_proof_state: str, strategic_directive: str = "")
     # CPU-bound inference
     raw_response = llm(
         prompt,
-        max_tokens=128,
+        max_tokens=1024,
         stop=["```", "###"], 
-        temperature=0.2,
+        temperature=0.1,
         stream=False      
     )
 
